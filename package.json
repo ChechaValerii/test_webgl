@@ -1,0 +1,13 @@
+{
+  "name": "mapbox-gl-puppeteer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "cli-table": "^0.3.4",
+    "puppeteer": "7.0.4"
+  },
+  "scripts": {
+    "test": "node index.js"
+  }
+}

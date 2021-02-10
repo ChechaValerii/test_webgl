@@ -1,0 +1,127 @@
+
+<!doctype html>
+
+<html style='height: 100%;'>
+
+<head>
+    <link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
+
+    <style>
+
+        body {
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h2 {
+            margin-top: 50px;
+            margin-bottom: 10px;
+        }
+
+        #table, #map, #map-log, #diagnostics-log {
+            width: 960px;
+            margin: 10px 0;
+        }
+
+        #map {
+            height: 100px;
+        }
+
+        #canvas {
+            height: 0;
+        }
+
+        th code {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class='fill-gray'>
+
+    <h2>Map instantiation diagnostics</h2>
+    <div id="map"></div>
+    <code id="map-log"></code>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.40.0/mapbox-gl.js'></script>
+    <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibW91cm5lciIsImEiOiJWWnRiWG1VIn0.j6eccFHpE3Q04XPLI7JxbA';
+        try {
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v9',
+                zoom: 1
+            });
+            map.on('error', function(event) {
+                writeLogMessage(event.error.toString());
+            });
+            writeLogMessage('WebGL context:', map.painter.gl);
+            writeLogMessage('WebGL errors:', map.painter.gl.getError());
+        } catch (e) {
+            writeLogMessage('Caught exception:', e.stack || e.toString());
+        }
+        writeLogMessage('Done!');
+
+        function writeLogMessage() {
+            console.log(Array.prototype.join.call(arguments, ' ') + '\n');
+        }
+    </script>
+
+    <h2>Support detection diagnostics</h2>
+    <canvas id="canvas"></canvas>
+    <script src='http://mapbox.github.io/mapbox-gl-supported/index.js'></script>
+    <script>
+        function performTest(detectionMethod, contextType, failIfMajorPerformanceCaveat) {
+            var attributes = Object.create(mapboxgl.supported.webGLContextAttributes);
+            attributes.failIfMajorPerformanceCaveat = failIfMajorPerformanceCaveat;
+
+            var canvas = document.getElementById('canvas');
+            if (canvas[detectionMethod]) {
+                var results = canvas[detectionMethod](contextType, attributes);
+                writeTestResults(results, results && results.getError && results.getError());
+            } else {
+                writeTestResults('detection method unavailable');
+            }
+
+            function writeTestResults(result, error) {
+                // console.log([detectionMethod, contextType, failIfMajorPerformanceCaveat, result, error || 'none'])
+                addTableRow([detectionMethod, contextType, failIfMajorPerformanceCaveat, result, error || 'none'])
+            }
+        }
+
+        performTest('probablySupportsContext', 'webgl', true);
+        performTest('probablySupportsContext', 'webgl', false);
+        performTest('probablySupportsContext', 'experimental-webgl', true);
+        performTest('probablySupportsContext', 'experimental-webgl', false);
+
+        performTest('supportsContext', 'webgl', true);
+        performTest('supportsContext', 'webgl', false);
+        performTest('supportsContext', 'experimental-webgl', true);
+        performTest('supportsContext', 'experimental-webgl', false);
+
+        performTest('getContext', 'webgl', true);
+        performTest('getContext', 'webgl', false);
+        performTest('getContext', 'experimental-webgl', true);
+        performTest('getContext', 'experimental-webgl', false);
+
+        drawTable();
+    </script>
+
+    <h2>WebGL diagnostics</h2>
+    <script src="https://cdn.rawgit.com/ashima/webgl-diagnostic/3cc7b376/js/webgldiagdata.js"></script>
+    <script src="https://cdn.rawgit.com/ashima/webgl-diagnostic/3cc7b376/js/webgldiagnostic.js"></script>
+    <script>
+        console.log('WebGLDiagnostic report: ' + WebGLDiagnostic.report('canvas'));
+        var canvasElement = document.getElementById('canvas');
+        var gl = canvasElement.getContext('webgl') || canvasElement.getContext('experimental-webgl');
+        var glDebugRendererInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (glDebugRendererInfo) {
+            console.log('Unmasked vendor: ' + gl.getParameter(glDebugRendererInfo.UNMASKED_VENDOR_WEBGL) + '\n');
+            console.log('Unmasked renderer: ' + gl.getParameter(glDebugRendererInfo.UNMASKED_RENDERER_WEBGL) + '\n');
+        } else {
+            console.log('"WEBGL_debug_renderer_info" extension unavailable');
+        }
+    </script>
+</body>
+</html>
